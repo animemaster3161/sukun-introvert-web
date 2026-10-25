@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#c4d4de">
+<title>Sukun — Your Personal Space</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="sukun-backend.js"></script>
+
+<style>
+:root {
+  --ink: #1d2a36;
+  --mute: #4f606d;
+  --glass: rgba(255,255,255,.38);
+  --line: rgba(255,255,255,.62);
+  --shadow: 0 20px 60px rgba(36,57,75,.16);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Nunito', sans-serif;
+  color: var(--ink);
+  background: linear-gradient(135deg,#dce8ef,#b9cbd8 50%,#e6e8e6);
+  padding: 18px;
+}
+
+.wrap { width: min(1120px,100%); margin: auto; }
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 0;
+  gap: 12px;
+}
+
+.brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-weight: 800;
+}
+
+.logo {
+  width: 45px;
+  height: 45px;
+  border-radius: 16px;
+  background: linear-gradient(145deg,#7d9bb2,#d9e5ec);
+  display: grid;
+  place-items: center;
+  font-size: 23px;
+}
+
+.brand small {
+  display: block;
+  color: var(--mute);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+}
+
+.pill {
+  border: 1px solid var(--line);
+  background: #ffffff55;
+  border-radius: 99px;
+  padding: 9px 14px;
+  color: var(--mute);
+  font-size: 13px;
+}
+
+.glass {
+  background: var(--glass);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--shadow);
+  border-radius: 28px;
+}
+
+.login-layout {
+  min-height: calc(100vh - 95px);
+  display: grid;
+  grid-template-columns: 1.1fr .9fr;
+  align-items: center;
+  gap: clamp(25px,6vw,80px);
+  padding: 20px 0 55px;
+}
+
+.intro { padding: 24px 0; }
+
+.eyebrow {
+  color: #56758b;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+}
+
+.intro h1 {
+  font-size: clamp(42px,6vw,76px);
+  line-height: 1.02;
+  letter-spacing: -2.5px;
+  margin: 17px 0;
+}
+
+.script {
+  font-family: 'Caveat', cursive;
+  color: #597a91;
+  font-size: clamp(30px,4vw,43px);
+}
+
+.intro p {
+  max-width: 490px;
+  color: var(--mute);
+  line-height: 1.8;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 26px;
+}
+
+.chip {
+  padding: 9px 13px;
+  border-radius: 99px;
+  background: #ffffff55;
+  border: 1px solid #ffffff88;
+  color: #405766;
+  font-size: 13px;
+}
+
+.login-card {
+  padding: clamp(25px,4vw,42px);
+  max-width: 440px;
+  width: 100%;
+  justify-self: center;
+}
+
+.card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  background: #ffffff85;
+  display: grid;
+  place-items: center;
+  font-size: 25px;
+  margin-bottom: 20px;
+}
+
+.login-card h2 { font-size: 28px; margin: 0 0 8px; }
+
+.sub {
+  color: var(--mute);
+  line-height: 1.6;
+  font-size: 14px;
+  margin-bottom: 25px;
+}
+
+.field { display: block; margin-top: 17px; }
+
+.field span {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.field input {
+  width: 100%;
+  border: 1px solid #ffffffc9;
+  background: #ffffff85;
+  border-radius: 14px;
+  padding: 14px 15px;
+  outline: none;
+  color: var(--ink);
+  font: inherit;
+}
+
+.field input:focus {
+  border-color: #6d8aa3;
+  box-shadow: 0 0 0 3px #6d8aa322;
+}
+
+.submit {
+  border: 0;
+  width: 100%;
+  margin-top: 23px;
+  padding: 15px;
+  border-radius: 15px;
+  color: white;
+  background: linear-gradient(120deg,#536f85,#7898ae);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.note {
+  font-size: 11px;
+  color: var(--mute);
+  line-height: 1.6;
+  text-align: center;
+  margin-top: 16px;
+}
+
+.footer {
+  color: var(--mute);
+  font-size: 12px;
+  text-align: center;
+  padding: 20px;
+}
+
+@media(max-width:760px) {
+  .login-layout {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding-top: 10px;
+  }
+
+  .intro { padding: 20px 2px 0; }
+  .intro h1 { letter-spacing: -1.5px; }
+  .intro p { font-size: 14px; }
+  .login-card { margin: 15px auto 25px; }
+  .top { padding-top: 15px; }
+}
+
+@media(max-width:460px) {
+  body { padding: 13px; }
+  .pill { font-size: 11px; }
+  .brand { font-size: 14px; }
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">☁</div>
+      <div>
+        SUKUN
+        <small>YOUR PERSONAL SPACE</small>
+      </div>
+    </div>
+    <div class="pill">Take it easy · One day at a time</div>
+  </header>
+
+  <main class="login-layout">
+    <section class="intro">
+      <div class="eyebrow">A little space, just for you</div>
+
+      <h1>
+        Slow down.<br>
+        Come back to <span style="color:#66859b">yourself.</span>
+      </h1>
+
+      <div class="script">Take the day gently. ✨</div>
+
+      <p>
+        Your personal space for daily routines, big dreams,
+        honest thoughts, and peaceful moments. No pressure —
+        just you and your peace of mind.
+      </p>
+
+      <div class="chips">
+        <span class="chip">🌿 Daily Routine</span>
+        <span class="chip">📖 Personal Diary</span>
+        <span class="chip">🌙 Daily Reflection</span>
+        <span class="chip">🎧 Calming Sounds</span>
+      </div>
+    </section>
+
+    <section class="glass login-card">
+      <div class="card-icon" aria-hidden="true">☾</div>
+
+      <h2>Welcome Home</h2>
+      <p class="sub">Apne account se sign in karein, ya pehli baar hain to naya account banayein.</p>
+
+      <form id="loginForm">
+        <label class="field">
+          <span>Email</span>
+          <input
+            id="username"
+            name="email"
+            type="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            required
+          >
+        </label>
+
+        <label class="field">
+          <span>Password</span>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="At least 6 characters"
+            minlength="6"
+            required
+          >
+        </label>
+
+        <button class="submit" type="submit">
+          Sign in and Continue</button>
+        <button class="submit" id="signupButton" type="button" style="margin-top:10px;background:linear-gradient(120deg,#829c89,#9ab19f)">Create account</button>
+      </form>
+
+      <p class="note" id="sukunAuthMessage" role="status">Aapka data aapke Supabase account ke saath sync hoga.</p>
+      <p class="note">Secret diary aur uska PIN is device par hi rahenge. Sign up ke baad email confirmation aa sakta hai.</p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    Remember: you deserve the same kindness you give to others. ♡
+  </footer>
+
+</div>
+
+<script>
+const authForm=document.getElementById('loginForm'),authEmail=document.getElementById('username'),authPass=document.getElementById('password');
+authForm.addEventListener('submit', async function(event) {
+  event.preventDefault();
+  const backend=window.SukunBackend,status=document.getElementById('sukunAuthMessage');
+  if(!backend?.configured){status.textContent='Pehle supabase-config.js mein project URL aur anon key set karein.';status.style.color='#9c3b45';return;}
+  status.textContent='Signing in…';
+  const {error}=await backend.signIn(authEmail.value.trim(),authPass.value);
+  if(error){status.textContent=error.message;status.style.color='#9c3b45';return;}
+  location.href='app.html';
+});
+document.getElementById('signupButton').addEventListener('click',async()=>{
+  const backend=window.SukunBackend,status=document.getElementById('sukunAuthMessage');
+  if(!backend?.configured){status.textContent='Pehle supabase-config.js mein project URL aur anon key set karein.';status.style.color='#9c3b45';return;}
+  status.textContent='Account ban raha hai…';
+  const {data,error}=await backend.signUp(authEmail.value.trim(),authPass.value);
+  if(error){status.textContent=error.message;status.style.color='#9c3b45';return;}
+  status.textContent=data.session?'Account ready hai. Opening Sukun…':'Account ban gaya. Email confirm karke phir sign in karein.';
+  if(data.session)setTimeout(()=>location.href='app.html',700);
+});
+</script>
+
+</body>
+</html>

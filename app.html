@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#c4d4de">
+<title>Sukun</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Nunito,system-ui,sans-serif;background:#c4d4de}body{display:flex;flex-direction:column}#app{border:0;display:block;flex:1;width:100%;min-height:0}#player{display:none;min-height:64px;padding:8px 16px calc(8px + env(safe-area-inset-bottom,0px));align-items:center;gap:12px;background:rgba(35,48,60,.94);color:#fff;box-shadow:0 -5px 20px #18232c30}body.has-song #player{display:flex}.meta{min-width:0;flex:1}.meta strong,.meta small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.meta small{opacity:.72;font-size:12px}.controls{display:flex;align-items:center;gap:8px}.controls button{border:0;border-radius:50%;width:38px;height:38px;background:#ffffff22;color:#fff;font-size:17px;cursor:pointer}.controls #repeat{width:auto;min-width:60px;padding:0 8px;border-radius:12px;font-size:12px}.controls input{width:90px;accent-color:#b7d0e0}.time{font-size:11px;white-space:nowrap;opacity:.8}@media(max-width:560px){#player{gap:7px;padding-left:10px;padding-right:10px}.controls{gap:4px}.controls button{width:32px;height:32px;font-size:13px}.controls #repeat{min-width:52px;padding:0 5px;font-size:10px}.controls input{width:50px}.meta small{display:none}.time{font-size:10px}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="sukun-player.js" defer></script>
+</head>
+<body>
+<iframe id="app" name="sukunApp" title="Sukun app"></iframe>
+<div id="player" aria-label="Now playing">
+  <div class="meta"><strong id="songTitle">No song playing</strong><small id="songSubtitle">Playing across Sukun pages</small></div>
+  <div class="controls"><button id="previous" type="button" aria-label="Previous track">|◀</button><span class="time" id="songTime">00:00</span><button id="toggle" type="button" aria-label="Pause">Ⅱ</button><button id="next" type="button" aria-label="Next track">▶|</button><button id="repeat" type="button" aria-label="Repeat playlist">↻ All</button><input id="volume" type="range" min="0" max="100" value="70" aria-label="Song volume"><button id="stop" type="button" aria-label="Stop song">■</button></div>
+</div>
+</body>
+</html>
