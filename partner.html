@@ -358,19 +358,20 @@ function render(){log.innerHTML='';resetDays();if(!S.msgs.length){bubble('bot','
 /* ---------- Bolna (voice + typewriter) ---------- */
 let replyAudio=null,replyAudioUrl=null,replyAudioCancel=null,speechGeneration=0;
 function stopTalk(){speechGeneration++;if(replyAudioCancel){const finish=replyAudioCancel;replyAudioCancel=null;finish()}if(replyAudio){replyAudio.onended=replyAudio.onerror=null;replyAudio.pause();replyAudio=null}if(replyAudioUrl){URL.revokeObjectURL(replyAudioUrl);replyAudioUrl=null}}
-function playGeminiVoice(base64,finish){let completed=false;const complete=()=>{if(completed)return;completed=true;replyAudioCancel=null;finish()};replyAudioCancel=complete;try{const raw=atob(base64),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);replyAudioUrl=URL.createObjectURL(new Blob([bytes],{type:'audio/wav'}));replyAudio=new Audio(replyAudioUrl);replyAudio.onended=()=>{if(replyAudioUrl)URL.revokeObjectURL(replyAudioUrl);replyAudioUrl=null;replyAudio=null;complete()};replyAudio.onerror=complete;const promise=replyAudio.play();if(promise)promise.catch(complete)}catch(_){complete()}}
+function speakBrowser(text,finish){if(!('speechSynthesis'in window)||!window.SpeechSynthesisUtterance){hint('Is browser mein voice playback supported nahi hai. Chrome ya Edge try karein.');finish();return}try{speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(text);utterance.lang=S.lang||CFG.ttsLang;const voices=speechSynthesis.getVoices();const voice=voices.find(v=>/^hi(-|_)/i.test(v.lang));if(voice)utterance.voice=voice;utterance.onend=finish;utterance.onerror=()=>{hint('Reply aa gaya, par browser voice play nahi kar saka. Device volume check karein.');finish()};speechSynthesis.speak(utterance)}catch(_){hint('Browser voice start nahi ho payi. Device volume check karein.');finish()}}
+function playGeminiVoice(base64,finish,text){let completed=false;const complete=()=>{if(completed)return;completed=true;replyAudioCancel=null;finish()};const fail=()=>{if(replyAudioUrl){URL.revokeObjectURL(replyAudioUrl);replyAudioUrl=null}replyAudio=null;speakBrowser(text,complete)};replyAudioCancel=()=>{if(replyAudio){replyAudio.onended=replyAudio.onerror=null;replyAudio.pause();replyAudio=null}complete()};try{const raw=atob(base64),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);replyAudioUrl=URL.createObjectURL(new Blob([bytes],{type:'audio/wav'}));replyAudio=new Audio(replyAudioUrl);replyAudio.onended=()=>{if(replyAudioUrl)URL.revokeObjectURL(replyAudioUrl);replyAudioUrl=null;replyAudio=null;complete()};replyAudio.onerror=fail;const promise=replyAudio.play();if(promise)promise.catch(fail)}catch(_){fail()}}
 function botSay(text,audioReady=null){return new Promise(res=>{
   typing(false);
   const now=Date.now();S.msgs.push({r:'bot',t:text,d:now});save();
   const el=bubble('bot','',now);
-  const useVoice=S.voice&&!!audioReady;
+  const useVoice=S.voice;
   let typed=false,spoken=!useVoice,i=0,fin=false;
   const done=()=>{if(fin||!typed)return;fin=true;clearTimeout(wd);clearInterval(iv);if(!useVoice||spoken)setSpeaking(false);res()};
   const wd=setTimeout(()=>{speechGeneration++;el.textContent=text;typed=spoken=true;if(replyAudio){replyAudio.onended=replyAudio.onerror=null;replyAudio.pause();replyAudio=null}if(replyAudioUrl){URL.revokeObjectURL(replyAudioUrl);replyAudioUrl=null}done()},Math.max(30000,text.length*250));
   A.text=text;A.pos=0;
   setSpeaking(true);
   const iv=setInterval(()=>{i+=Math.max(2,Math.ceil(text.length/100));el.textContent=text.slice(0,i);log.scrollTop=log.scrollHeight;if(i>=text.length){typed=true;done()}},16);
-  if(useVoice){try{stopTalk();const generation=speechGeneration;const finish=()=>{spoken=true;setSpeaking(false);done()};if(generation===speechGeneration)playGeminiVoice(audioReady,finish)}catch(_){spoken=true;setSpeaking(false);done()}}
+  if(useVoice){try{stopTalk();const generation=speechGeneration;const finish=()=>{spoken=true;setSpeaking(false);done()};if(generation===speechGeneration){if(audioReady)playGeminiVoice(audioReady,finish,text);else speakBrowser(text,finish)}}catch(_){speakBrowser(text,()=>{spoken=true;setSpeaking(false);done()})}}
 })}
 
 /* ---------- Dimaag: abhi sirf canned replies (frontend demo) ---------- */
@@ -397,7 +398,7 @@ async function send(text){
   if(!S.msgs.length){log.innerHTML='';resetDays()}
   const now=Date.now();S.msgs.push({r:'me',t:text,d:now});save();bubble('me',text,now);inp.value='';
   typing(true);
-  try{const reply=await getReply(text);let audio=null;if(S.voice&&window.SukunBackend.partnerSpeak){audio=await requestLimit(window.SukunBackend.partnerSpeak(reply.text),10000,'Voice generation timed out.').then(result=>result?.audio||null).catch(()=>null)}await botSay(reply.text,audio)}catch(e){typing(false);hint(e.message||'Partner API is unavailable. Check Supabase Edge Function setup.')}
+  try{const reply=await getReply(text);let audio=null,voiceError='';if(S.voice&&window.SukunBackend.partnerSpeak){try{const result=await requestLimit(window.SukunBackend.partnerSpeak(reply.text),18000,'Voice generation timed out.');audio=result?.audio||null;if(!audio)voiceError=result?.error||'Gemini returned no voice audio.'}catch(e){voiceError=e.message||'Voice generation failed.'}}await botSay(reply.text,audio);if(voiceError&&(!('speechSynthesis'in window)))hint('Reply aa gaya, voice nahi bani: '+voiceError)}catch(e){typing(false);hint(e.message||'Partner API is unavailable. Check Supabase Edge Function setup.')}
   busy=false;
 }
 $('#sd').onclick=()=>send(inp.value);
