@@ -244,7 +244,7 @@ function hint(t){$('#ht').textContent=t}
 
 /* ---------- Avatar: photo + live animation (blink, breathing, lip sync) ---------- */
 // Coordinates neeche 600x600 photo ke hisaab se hain. Photo badlo to ye numbers bhi badalne padenge.
-const A={img:null,ready:false,raf:0,last:0,text:'',pos:0,CPS:13.5,sp:0,o:0,r:0,to:0,tr:0,blink:0,blinkAt:2200,blinkT:-1,dbl:false,
+const A={img:null,ready:false,raf:0,last:0,text:'',pos:0,CPS:13.5,followAudio:false,sp:0,o:0,r:0,to:0,tr:0,blink:0,blinkAt:2200,blinkT:-1,dbl:false,
   mouth:{x:299,y:331},
   eyes:[{x:199,y:205,rx:50,ry:40,rot:0},{x:387,y:192,rx:52,ry:42,rot:-5}],
   // Iris: photo mein iris ka center/radius, aur uske aas-paas aankh ke safed hisse ki ellipse (clip)
@@ -311,7 +311,7 @@ function frame(t){
   A.raf=requestAnimationFrame(frame);
   if(!A.ready||!stage.classList.contains('hasimg')||document.hidden){A.last=t;return}
   const dt=Math.min(.05,(t-A.last)/1000||.016);A.last=t;
-  if(speaking&&A.text){A.pos=Math.min(A.text.length,A.pos+dt*A.CPS);viseme(A.text[Math.min(Math.floor(A.pos),A.text.length-1)],t)}else{A.to=0;A.tr=0}
+  if(speaking&&A.text){if(!A.followAudio)A.pos=Math.min(A.text.length,A.pos+dt*A.CPS);viseme(A.text[Math.min(Math.floor(A.pos),A.text.length-1)],t)}else{A.to=0;A.tr=0}
   const k=1-Math.exp(-dt*24);A.o+=(A.to-A.o)*k;A.r+=(A.tr-A.r)*k;
   A.sp+=((speaking?1:0)-A.sp)*(1-Math.exp(-dt*4));
   // blink
@@ -357,9 +357,9 @@ function render(){log.innerHTML='';resetDays();if(!S.msgs.length){bubble('bot','
 
 /* ---------- Bolna (voice + typewriter) ---------- */
 let replyAudio=null,replyAudioUrl=null,replyAudioCancel=null,speechGeneration=0;
-function stopTalk(){speechGeneration++;if(replyAudioCancel){const finish=replyAudioCancel;replyAudioCancel=null;finish()}if(replyAudio){replyAudio.onended=replyAudio.onerror=null;replyAudio.pause();replyAudio=null}if(replyAudioUrl){URL.revokeObjectURL(replyAudioUrl);replyAudioUrl=null}}
-function speakBrowser(text,finish){if(!('speechSynthesis'in window)||!window.SpeechSynthesisUtterance){hint('Is browser mein voice playback supported nahi hai. Chrome ya Edge try karein.');finish();return}try{speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(text);utterance.lang=S.lang||CFG.ttsLang;const voices=speechSynthesis.getVoices();const voice=voices.find(v=>/^hi(-|_)/i.test(v.lang));if(voice)utterance.voice=voice;utterance.onend=finish;utterance.onerror=()=>{hint('Reply aa gaya, par browser voice play nahi kar saka. Device volume check karein.');finish()};speechSynthesis.speak(utterance)}catch(_){hint('Browser voice start nahi ho payi. Device volume check karein.');finish()}}
-function playGeminiVoice(base64,finish,text){let completed=false;const complete=()=>{if(completed)return;completed=true;replyAudioCancel=null;finish()};const fail=()=>{if(replyAudioUrl){URL.revokeObjectURL(replyAudioUrl);replyAudioUrl=null}replyAudio=null;speakBrowser(text,complete)};replyAudioCancel=()=>{if(replyAudio){replyAudio.onended=replyAudio.onerror=null;replyAudio.pause();replyAudio=null}complete()};try{const raw=atob(base64),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);replyAudioUrl=URL.createObjectURL(new Blob([bytes],{type:'audio/wav'}));replyAudio=new Audio(replyAudioUrl);replyAudio.onended=()=>{if(replyAudioUrl)URL.revokeObjectURL(replyAudioUrl);replyAudioUrl=null;replyAudio=null;complete()};replyAudio.onerror=fail;const promise=replyAudio.play();if(promise)promise.catch(fail)}catch(_){fail()}}
+function stopTalk(){speechGeneration++;if('speechSynthesis'in window)speechSynthesis.cancel();if(replyAudioCancel){const finish=replyAudioCancel;replyAudioCancel=null;finish()}if(replyAudio){replyAudio.onended=replyAudio.onerror=null;replyAudio.pause();replyAudio=null}if(replyAudioUrl){URL.revokeObjectURL(replyAudioUrl);replyAudioUrl=null}}
+function speakBrowser(text,finish){if(!('speechSynthesis'in window)||!window.SpeechSynthesisUtterance){hint('Is browser mein voice playback supported nahi hai. Chrome ya Edge try karein.');finish();return}try{speechSynthesis.cancel();A.followAudio=true;A.pos=0;const utterance=new SpeechSynthesisUtterance(text);utterance.lang=S.lang||CFG.ttsLang;const voices=speechSynthesis.getVoices();const voice=voices.find(v=>/^hi(-|_)/i.test(v.lang));if(voice)utterance.voice=voice;utterance.onboundary=e=>{if(Number.isFinite(e.charIndex))A.pos=e.charIndex};utterance.onend=()=>{A.followAudio=false;finish()};utterance.onerror=()=>{A.followAudio=false;hint('Reply aa gaya, par browser voice play nahi kar saka. Device volume check karein.');finish()};speechSynthesis.speak(utterance)}catch(_){A.followAudio=false;hint('Browser voice start nahi ho payi. Device volume check karein.');finish()}}
+function playGeminiVoice(base64,finish,text){let completed=false;const complete=()=>{if(completed)return;completed=true;A.followAudio=false;replyAudioCancel=null;finish()};const fail=()=>{if(replyAudioUrl){URL.revokeObjectURL(replyAudioUrl);replyAudioUrl=null}replyAudio=null;speakBrowser(text,complete)};replyAudioCancel=()=>{if(replyAudio){replyAudio.onended=replyAudio.onerror=null;replyAudio.pause();replyAudio=null}complete()};try{const raw=atob(base64),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);replyAudioUrl=URL.createObjectURL(new Blob([bytes],{type:'audio/wav'}));replyAudio=new Audio(replyAudioUrl);A.followAudio=true;replyAudio.ontimeupdate=()=>{if(replyAudio&&Number.isFinite(replyAudio.duration)&&replyAudio.duration>0)A.pos=text.length*replyAudio.currentTime/replyAudio.duration};replyAudio.onended=()=>{if(replyAudioUrl)URL.revokeObjectURL(replyAudioUrl);replyAudioUrl=null;replyAudio=null;complete()};replyAudio.onerror=fail;const promise=replyAudio.play();if(promise)promise.catch(fail)}catch(_){fail()}}
 function botSay(text,audioReady=null){return new Promise(res=>{
   typing(false);
   const now=Date.now();S.msgs.push({r:'bot',t:text,d:now});save();
@@ -368,7 +368,7 @@ function botSay(text,audioReady=null){return new Promise(res=>{
   let typed=false,spoken=!useVoice,i=0,fin=false;
   const done=()=>{if(fin||!typed)return;fin=true;clearTimeout(wd);clearInterval(iv);if(!useVoice||spoken)setSpeaking(false);res()};
   const wd=setTimeout(()=>{speechGeneration++;el.textContent=text;typed=spoken=true;if(replyAudio){replyAudio.onended=replyAudio.onerror=null;replyAudio.pause();replyAudio=null}if(replyAudioUrl){URL.revokeObjectURL(replyAudioUrl);replyAudioUrl=null}done()},Math.max(30000,text.length*250));
-  A.text=text;A.pos=0;
+  A.text=text;A.pos=0;A.followAudio=false;
   setSpeaking(true);
   const iv=setInterval(()=>{i+=Math.max(2,Math.ceil(text.length/100));el.textContent=text.slice(0,i);log.scrollTop=log.scrollHeight;if(i>=text.length){typed=true;done()}},16);
   if(useVoice){try{stopTalk();const generation=speechGeneration;const finish=()=>{spoken=true;setSpeaking(false);done()};if(generation===speechGeneration){if(audioReady)playGeminiVoice(audioReady,finish,text);else speakBrowser(text,finish)}}catch(_){speakBrowser(text,()=>{spoken=true;setSpeaking(false);done()})}}
